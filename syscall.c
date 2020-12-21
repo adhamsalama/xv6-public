@@ -140,7 +140,7 @@ syscall(void)
   num = curproc->tf->eax;
   // check if the call made is read
   if (num==SYS_read){
-    curproc->readid = curproc->readid + 1; //my change
+    readcount++;
   }
   // increament the counter when system call is read and update readid for process when getreadcount is called
   if (num==SYS_getreadcount){
