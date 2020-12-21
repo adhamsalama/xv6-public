@@ -8,6 +8,12 @@
 #include "proc.h"
 
 int
+sys_getreadcount(void)
+{
+  return myproc()->readid;
+}
+
+int
 sys_fork(void)
 {
   return fork();

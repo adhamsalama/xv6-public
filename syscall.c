@@ -13,6 +13,7 @@
 // library system call function. The saved user %esp points
 // to a saved program counter, and then the first argument.
 
+int readcount = 0; // add global counter
 // Fetch the int at addr from the current process.
 int
 fetchint(uint addr, int *ip)
@@ -82,6 +83,7 @@ argstr(int n, char **pp)
   return fetchstr(addr, pp);
 }
 
+extern int sys_getreadcount(void); // my chnage
 extern int sys_chdir(void);
 extern int sys_close(void);
 extern int sys_dup(void);
@@ -105,6 +107,7 @@ extern int sys_write(void);
 extern int sys_uptime(void);
 
 static int (*syscalls[])(void) = {
+[SYS_getreadcount] sys_getreadcount, //my change
 [SYS_fork]    sys_fork,
 [SYS_exit]    sys_exit,
 [SYS_wait]    sys_wait,
@@ -135,6 +138,14 @@ syscall(void)
   struct proc *curproc = myproc();
 
   num = curproc->tf->eax;
+  // check if the call made is read
+  if (num==SYS_read){
+    curproc->readid = curproc->readid + 1; //my change
+  }
+  // increament the counter when system call is read and update readid for process when getreadcount is called
+  if (num==SYS_getreadcount){
+    curproc->readid = readcount; //my change
+  }
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     curproc->tf->eax = syscalls[num]();
   } else {
