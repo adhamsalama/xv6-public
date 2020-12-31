@@ -72,9 +72,12 @@ myproc(void) {
 // Otherwise return 0.
 static struct proc*
 allocproc(void)
-{
+{ 
+  // p->readid = 0;
   struct proc *p;
   char *sp;
+  
+  
 
   acquire(&ptable.lock);
 
@@ -88,7 +91,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-  p->readid = 0;
+  p->readid = 0 ;
 
   release(&ptable.lock);
 
@@ -533,3 +536,69 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+int 
+clone(void(*fcn)(void*), void *arg, void *stack) {
+   int i ;
+   struct proc *np;
+   struct proc *curproc = myproc();
+   // the two required if statements -- checking memeory page
+   // check if stack is not alligned
+   // M1M0N: PGSIZE = 4K, make sure that the stack size is multuble of PGSIZE
+    if (((uint) stack % PGSIZE) != 0) {
+     return -1;
+    }
+  // check if we have less than one memory page
+    // Adhom: 
+    /*
+      // The clone() system call creates a new thread-like process. 
+      // the child process shares the address space of the original process 
+      // (fork() creates a whole new copy of the address space, 
+      // keeping the child completely separate from the parent)
+      // void (*fcn)(void*) is a pointer to the function that 
+      // void *arg is the argument that will be passed to *fcn once the child runs
+      // void *stack is a memory address in the parent's address space 
+      // Remember a void* is used to point to a data type that is not yet specified.
+    */    
+    if ((curproc->sz - (uint) stack) < PGSIZE) {
+     return -1;
+    }
+   // Allocate process.
+   if ((np = allocproc()) == 0) {
+     return -1;
+   }
+   // copy the shared address spaces of the parent process
+   np->pgdir = curproc->pgdir;
+   np->sz = curproc->sz;
+   np->parent = curproc;
+   *np->tf = *curproc->tf;
+   uint user_stack[2];
+    user_stack[0] = 0xffffffff;
+    user_stack[1] = (uint) arg;
+    // set top of the stack to the allocated page
+    // (stack is actually the bottom of the page)
+    uint stack_top = (uint) stack + PGSIZE;
+    // subtract 8 bytes from the stack top to
+    // make space for the two values being saved
+    stack_top -= 8;
+    // copy user stack values to np's memory
+    if (copyout(np->pgdir, stack_top, user_stack, 8) < 0) {
+        return -1;
+    }
+    // set stack base and stack pointers for return-from-trap
+    // they will be the same value because we are returning into a function
+    np->tf->ebp = (uint) stack_top;
+    np->tf->esp = (uint) stack_top;
+    // set instruction pointer to address of function
+    np->tf->eip = (uint) fcn;
+   // Clear %eax so that fork returns 0 in the child.
+   np->tf->eax = 0;
+   for (i = 0; i < NOFILE; i++)
+     if (curproc->ofile[i]) np->ofile[i] = filedup(curproc->ofile[i]);
+   np->cwd = idup(curproc->cwd);
+   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
+   acquire(&ptable.lock);
+   np->state = RUNNABLE;
+   release(&ptable.lock);
+   return np->pid;
+ }

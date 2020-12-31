@@ -2,7 +2,6 @@ struct stat;
 struct rtcdate;
 
 // system calls
-int getreadcount(void); // my change
 int fork(void);
 int exit(void) __attribute__((noreturn));
 int wait(void);
@@ -38,3 +37,5 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+int getreadcount(void);
+int clone(void(*fcn)(void*), void *arg, void *stack);
