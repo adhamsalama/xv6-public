@@ -107,3 +107,7 @@ sys_clone(void){
     return -1;
   return clone(fcn, arg, stack);
 }
+
+int sys_join(void) {
+  return join();
+}

@@ -10,8 +10,8 @@ int main(int argc, char * argv []){
     char *stack = sbrk(PGSIZE);
     
     printf(1, "Chcekpoint 2\n");
-    clone(&(print_hello), (void *) 10, stack);
-    // join();
+    clone(&(print_hello), (void *) argv[1], stack);
+    join();
     printf(1, "checkpint 3\n");
     exit();
 

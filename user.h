@@ -39,3 +39,4 @@ void free(void*);
 int atoi(const char*);
 int getreadcount(void);
 int clone(void(*fcn)(void*), void *arg, void *stack);
+int join(void);
