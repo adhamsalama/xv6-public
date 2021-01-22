@@ -8,12 +8,6 @@
 #include "proc.h"
 
 int
-sys_getreadcount(void)
-{
-  return myproc()->readid;
-}
-
-int
 sys_fork(void)
 {
   return fork();
@@ -94,4 +88,26 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+int
+sys_getreadcount(void)
+{
+  return myproc()->readid;
+}
+
+int 
+sys_clone(void){
+  void *fcn, *arg, *stack;
+  if (argptr(0, (void *)&fcn, sizeof(void *)) < 0)
+  return -1;
+  if (argptr(1, (void *)&arg, sizeof(void *)) < 0)
+    return -1;
+  if (argptr(2, (void *)&stack, sizeof(void *)) < 0)
+    return -1;
+  return clone(fcn, arg, stack);
+}
+
+int sys_join(void) {
+  return join();
 }
