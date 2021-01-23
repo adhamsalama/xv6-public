@@ -8,6 +8,7 @@
 #include "spinlock.h"
 #include "rand.h"
 #include "pstat.h"
+#include "rand.h"
 
 
 struct {
