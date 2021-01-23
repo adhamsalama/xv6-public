@@ -111,3 +111,12 @@ sys_clone(void){
 int sys_join(void) {
   return join();
 }
+
+int
+sys_mprotect(void){
+  int d;
+  int n = 0;
+  if(argint(0, &d)<0 || argint(1, &n)<0)
+    return -1;
+  return mprotect((void *)d,n);
+}

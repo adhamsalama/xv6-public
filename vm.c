@@ -385,6 +385,58 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
   return 0;
 }
 
+// mprotect changes the protection bits of the page range starting at addr and of len pages to be read only
+int
+mprotect(void *addr, int len){
+  
+  // Check if len is invalid, if <= 0 or larger than process size
+  if(len <= 0 || (int)addr+len*PGSIZE>myproc()->sz){
+    cprintf("Invalid len.\n");
+    return -1;
+  }
+
+  // Check if addr is not page aligned
+  if((int)(((int) addr) % PGSIZE ) != 0){
+    cprintf("Invalid addr. %p\n", addr);
+    return -1;
+  }
+
+  
+  // Loop for each page
+  pte_t *pte;
+  int i;
+  for (i = (int) addr; i < ((int) addr + (len) *PGSIZE); i+= PGSIZE){
+    /* Get the address of the PTE in the current process' page table (pgdir)
+      walkpgdir takes a page directory (first-level page table) and returns a pointer to the page table entry for a particular virtual address.
+      You can find a page directory to pass to walkpgdir with something like myproc()->pgdir.
+    */
+    pte = walkpgdir(myproc()->pgdir,(void*) i, 0);
+    /*
+      PTE_U controls whether user programs are allowed to use the page; if clear,
+      only the kernel is allowed to use the page.
+      PTE_P indicates whether the PTE is present,
+      if it is not set, a reference to the page causes a fault (i.e. is not allowed)
+    */
+    if(pte && ((*pte & PTE_U) != 0) && ((*pte & PTE_P) != 0) && (*pte & PTE_W) != 0){
+      // Clear the write flag bit
+      cprintf("Changing PTE write flag bit.\nPTE before changing = %d\n", *pte);
+      *pte = (*pte) & (~PTE_W);
+      cprintf("Changed changing PTE write flag bit\nPTE after changing = %d\n", *pte);
+    }
+    else
+      return -1;
+  }
+  /*
+  after changing a page-table entry, you need to make sure the hardware knows of the change. 
+  On 32-bit x86, this is readily accomplished by updating the CR3 register (what we generically call the page-table base register in class).
+  When the hardware sees that you overwrote CR3 (even with the same value), it guarantees that your PTE updates will be used upon subsequent accesses. The lcr3() function will help you in this pursuit.
+  lcr3(pagedirectory_t page)
+  V2P converts virtual address to physical address
+  */
+  lcr3(V2P(myproc()->pgdir));  
+  return 0;
+}
+
 //PAGEBREAK!
 // Blank page.
 //PAGEBREAK!

@@ -23,3 +23,4 @@
 #define SYS_getreadcount 22
 #define SYS_clone 23
 #define SYS_join 24
+#define SYS_mprotect 25

@@ -184,6 +184,7 @@ UPROGS=\
 	_zombie\
 	_clone\
 	_testnull\
+	_protection\
 
 
 

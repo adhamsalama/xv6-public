@@ -23,6 +23,10 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int getreadcount(void);
+int clone(void(*fcn)(void*), void *arg, void *stack);
+int join(void);
+int mprotect(void *addr, int len);
 
 // ulib.c
 int stat(const char*, struct stat*);
@@ -37,6 +41,3 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
-int getreadcount(void);
-int clone(void(*fcn)(void*), void *arg, void *stack);
-int join(void);
