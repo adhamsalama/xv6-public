@@ -6,7 +6,9 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "rand.h"
 #include "pstat.h"
+
 
 struct {
   struct spinlock lock;
@@ -60,9 +62,11 @@ myproc(void) {
   struct cpu *c;
   struct proc *p;
   pushcli();
+  // disable interrupts 
   c = mycpu();
   p = c->proc;
   popcli();
+  // enable interrupts 
   return p;
 }
 
@@ -89,7 +93,8 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-  p->readid = 0;
+  p->tickets = 1;
+  p->ticks = 0;
 
   release(&ptable.lock);
 
@@ -183,7 +188,7 @@ int
 fork(void)
 {
   int i, pid;
-  struct proc *np;
+  struct proc *np; // new process (child)
   struct proc *curproc = myproc();
 
   // Allocate process.
@@ -198,6 +203,9 @@ fork(void)
     np->state = UNUSED;
     return -1;
   }
+  // new process (child) will get the same tickets 
+  // number as the parent 
+  np->tickets = curproc->tickets;
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
@@ -289,6 +297,7 @@ wait(void)
       if(p->state == ZOMBIE){
         // Found one.
         pid = p->pid;
+
         kfree(p->kstack);
         p->kstack = 0;
         freevm(p->pgdir);
@@ -313,30 +322,70 @@ wait(void)
   }
 }
 
+
+// get the total number of tickets (for runnable processes)
+int
+lottery_total(void){
+  struct proc *p;
+  int total_tickets = 0;
+
+//loop over process table and increment total_tickets
+//if a runnable process is found 
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if(p->state==RUNNABLE){
+      total_tickets+=p->tickets;
+    }
+  }
+
+//returning total number of tickets (for runnable processes)
+  return total_tickets;
+}
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
 //  - choose a process to run
-//  - swtch to start running that process
+//  - swtch() to start running that process
 //  - eventually that process transfers control
-//      via swtch back to the scheduler.
+//      via swtch() back to the scheduler.
 void
 scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
-  
+  long total_tickets = 0;
+  long counter = 0;
+  long winner = 0;
+
   for(;;){
     // Enable interrupts on this processor.
     sti();
 
     // Loop over process table looking for process to run.
+    // lock process table
     acquire(&ptable.lock);
+    total_tickets = lottery_total();
+    winner = random_at_most(total_tickets);
+    counter = 0;
+
+    // loop over the process table
+    // NPROC = number of processes in the process table 
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
+
+      // if the process is zombie ( not runnable)
+      // increament the *p and continue the loop
+      if(p->state != RUNNABLE) {
+            continue;
+      }
+      // otherwise (process is runnable) 
+      counter += p->tickets;
+      // continue (get the next process) if we didn't react the winner 
+      if (counter < winner) {
+            continue;
+      }
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
@@ -347,15 +396,57 @@ scheduler(void)
 
       swtch(&(c->scheduler), p->context);
       switchkvm();
+      p->ticks += 1;
 
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       c->proc = 0;
+      // break after getting the winner
+      break;
     }
+    // unlock process table
     release(&ptable.lock);
-
+    /*Locking and unlocking process table so that no other 
+    process can run while the current process is running*/
   }
 }
+
+int 
+settickets(int tickets){
+  // return -1 if the caller passes in a number less than one
+  if(tickets < 1)
+    return -1;
+
+  struct proc *p = myproc();
+  p -> tickets = tickets;
+  // lock the process table
+  acquire(&ptable.lock);
+  // store the process tickets in its corresponding place in the ptable
+  ptable.proc[p-ptable.proc].tickets = tickets;
+  // unlock the process table
+  release(&ptable.lock);
+  // return 0 when success
+  return 0;
+}
+
+int
+getpinfo(struct pstat* ps) {
+  int i = 0;
+  struct proc *p;
+  // lock the process table
+  acquire(&ptable.lock);
+  // loop over all the process in the process table
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++, i++) {
+    ps->pid[i] = p->pid;
+    ps->inuse[i] = p->state != UNUSED;
+    ps->tickets[i] = p->tickets;
+    ps->ticks[i] = p->ticks;
+  }
+  // unlock the process table
+  release(&ptable.lock);
+  return 0;
+}
+
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state. Saves and restores

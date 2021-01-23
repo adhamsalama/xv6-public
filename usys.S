@@ -8,7 +8,6 @@
     int $T_SYSCALL; \
     ret
 
-SYSCALL(getreadcount) // my change
 SYSCALL(fork)
 SYSCALL(exit)
 SYSCALL(wait)
@@ -30,3 +29,5 @@ SYSCALL(getpid)
 SYSCALL(sbrk)
 SYSCALL(sleep)
 SYSCALL(uptime)
+SYSCALL(settickets)
+SYSCALL(getpinfo)
