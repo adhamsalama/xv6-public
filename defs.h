@@ -9,6 +9,7 @@ struct spinlock;
 struct sleeplock;
 struct stat;
 struct superblock;
+struct pstat;
 
 // bio.c
 void            binit(void);
@@ -74,6 +75,7 @@ void            kbdintr(void);
 
 // lapic.c
 void            cmostime(struct rtcdate *r);
+unsigned long   unixtime(void)
 int             lapicid(void);
 extern volatile uint*    lapic;
 void            lapiceoi(void);
@@ -120,6 +122,8 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
+int             getpinfo(struct pstat*);
+int             settickets(int);
 int             getreadcount(void);
 int             clone(void(*fcn)(void*), void *arg, void *stack);
 int             join(void);
@@ -160,6 +164,8 @@ int             argstr(int, char**);
 int             fetchint(uint, int*);
 int             fetchstr(uint, char**);
 void            syscall(void);
+int             getreadcount(void);
+int             getpinfo(struct pstat*);
 
 // timer.c
 void            timerinit(void);
