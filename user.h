@@ -27,6 +27,7 @@ int getreadcount(void);
 int clone(void(*fcn)(void*), void *arg, void *stack);
 int join(void);
 int mprotect(void *addr, int len);
+int munprotect(void *addr, int len);
 
 // ulib.c
 int stat(const char*, struct stat*);

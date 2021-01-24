@@ -108,6 +108,7 @@ extern int sys_getreadcount(void);
 extern int sys_clone(void);
 extern int sys_join(void);
 extern int sys_mprotect(void);
+extern int sys_munprotect(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -135,6 +136,7 @@ static int (*syscalls[])(void) = {
 [SYS_clone] sys_clone,
 [SYS_join] sys_join,
 [SYS_mprotect] sys_mprotect,
+[SYS_munprotect] sys_munprotect,
 
 };
 

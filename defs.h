@@ -123,6 +123,8 @@ void            yield(void);
 int             getreadcount(void);
 int             clone(void(*fcn)(void*), void *arg, void *stack);
 int             join(void);
+int             mprotect(void *addr, int len);
+int             munprotect(void *addr, int len);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
