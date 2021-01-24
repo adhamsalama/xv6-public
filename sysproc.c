@@ -96,6 +96,7 @@ sys_getreadcount(void)
 {
   return myproc()->readid;
 }
+
 int
 sys_settickets(void) {
   int n;
@@ -105,6 +106,15 @@ sys_settickets(void) {
   else {
     settickets(n);
   }
+  return 0;
+}
+
+int
+sys_getpinfo(void){
+    struct pstat *d;
+  if (argptr(0, (char **)&d, sizeof(struct pstat)) < 0)
+      return -1;
+  getpinfo(d);
   return 0;
 }
 
