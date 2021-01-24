@@ -26,6 +26,7 @@ void
 pinit(void)
 {
   initlock(&ptable.lock, "ptable");
+  sgenrand(unixtime());
 }
 
 // Must be called with interrupts disabled
