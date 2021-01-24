@@ -25,3 +25,5 @@
 #define SYS_join 24
 #define SYS_mprotect 25
 #define SYS_munprotect 26
+#define SYS_settickets 27
+#define SYS_getpinfo 28
