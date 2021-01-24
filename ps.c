@@ -3,8 +3,9 @@
 #include "pstat.h"
 
 int main(int argc, char* argv[]){
+   int i = 0;
    struct pstat ps;
-  while(1){
+  while(i < 5){
     getpinfo(&ps);
     printf(1, "\nPID\t|\tUSED?\t|\tTickets\t|\tticks\n");
     printf(1, "========|===============|===============|====================\n");
@@ -16,7 +17,8 @@ int main(int argc, char* argv[]){
       }
     }
     printf(1, "\n***********************************************************************\n");
-    sleep(200);
+    sleep(100);
+      i++;
   }
   exit();
   return 0;
