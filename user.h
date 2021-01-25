@@ -27,8 +27,8 @@ int uptime(void);
 int settickets(int);
 int getpinfo(struct pstat*);
 int getreadcount(void);
-int clone(void(*fcn)(void*), void *arg, void *stack);
-int join(void);
+int clone(void (*start_routine)(void*,void*), void *, void *, void *);
+int join(void**);
 int mprotect(void *addr, int len);
 int munprotect(void *addr, int len);
 
@@ -45,3 +45,5 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+int thread_create(void (*start_routine)(void *,void*), void * arg1, void * arg2);
+int thread_join();
