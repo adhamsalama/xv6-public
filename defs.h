@@ -125,8 +125,8 @@ void            yield(void);
 int             getpinfo(struct pstat*);
 int             settickets(int);
 int             getreadcount(void);
-int             clone(void(*fcn)(void*), void *arg, void *stack);
-int             join(void);
+int             clone(void(*fcn)(void*,void*), void *, void *, void*);
+int             join(void**);
 int             mprotect(void *addr, int len);
 int             munprotect(void *addr, int len);
 
