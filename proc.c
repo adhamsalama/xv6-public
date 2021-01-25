@@ -624,18 +624,12 @@ procdump(void)
 }
 
 int 
-clone(void(*fcn)(void*), void *arg, void *stack) {
-   int i ;
+clone(void(*fcn)(void*,void*), void *arg1,void *arg2, void *stack) {
+
    struct proc *np;
    struct proc *curproc = myproc();
-   // the two required if statements -- checking memeory page
-   // check if stack is not alligned
-   // M1M0N: PGSIZE = 4K, make sure that the stack size is multuble of PGSIZE
-    if (((uint) stack % PGSIZE) != 0) {
-     return -1;
-    }
-  // check if we have less than one memory page
-    // Adhom: 
+
+    // check if we have less than one memory page
     /*
       // The clone() system call creates a new thread-like process. 
       // the child process shares the address space of the original process 
@@ -658,17 +652,18 @@ clone(void(*fcn)(void*), void *arg, void *stack) {
    np->sz = curproc->sz;
    np->parent = curproc;
    *np->tf = *curproc->tf;
-   uint user_stack[2];
+   uint user_stack[3];
     user_stack[0] = 0xffffffff;
-    user_stack[1] = (uint) arg;
+    user_stack[1] = (uint) arg1;
+    user_stack[2] = (uint) arg2;
     // set top of the stack to the allocated page
     // (stack is actually the bottom of the page)
-    uint stack_top = (uint) stack + PGSIZE;
-    // subtract 8 bytes from the stack top to
+    uint stack_top = (uint) stack + PGSIZE; 
+    // subtract 12 bytes from the stack top to
     // make space for the two values being saved
-    stack_top -= 8;
+    stack_top -= 12;
     // copy user stack values to np's memory
-    if (copyout(np->pgdir, stack_top, user_stack, 8) < 0) {
+    if (copyout(np->pgdir, stack_top, user_stack, 12) < 0) {
         return -1;
     }
     // set stack base and stack pointers for return-from-trap
@@ -679,17 +674,22 @@ clone(void(*fcn)(void*), void *arg, void *stack) {
     np->tf->eip = (uint) fcn;
    // Clear %eax so that fork returns 0 in the child.
    np->tf->eax = 0;
+   int i ;
    for (i = 0; i < NOFILE; i++)
      if (curproc->ofile[i]) np->ofile[i] = filedup(curproc->ofile[i]);
+
+   // Duplicate the current directory to be used by the new thread
    np->cwd = idup(curproc->cwd);
-   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
-   acquire(&ptable.lock);
+
+   // Make the state of the new thread to be runnable 
    np->state = RUNNABLE;
-   release(&ptable.lock);
+
+   // Make the two threads belong to the current process
+   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
    return np->pid;
  }
 
-int join(void) {
+int join(void** stack) {
    struct proc *p;
    int haveThreads, pid;
    struct proc *curproc = myproc();
@@ -700,11 +700,11 @@ int join(void) {
      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
        if(p->parent != curproc)
          continue;
-        if(p->parent->pgdir != curproc->pgdir) // my change
+       if(p->parent->pgdir != curproc->pgdir) // if they share the same address space
          continue;
+        // Found one.
        haveThreads = 1;
        if(p->state == ZOMBIE){
-         // Found one.
          pid = p->pid;
          kfree(p->kstack);
          p->kstack = 0;
@@ -713,16 +713,18 @@ int join(void) {
          p->name[0] = 0;
          p->killed = 0;
          p->state = UNUSED;
+         stack = p->threadstack;
+         p->threadstack = 0;
          release(&ptable.lock);
          return pid;
-       }
-     }
+       }// End if
+     } // inner loop
      // No point waiting if we don't have any children.
      if(!haveThreads || curproc->killed){
        release(&ptable.lock);
        return -1;
-     }
+     } // end if
      // Wait for children to exit.  (See wakeup1 call in proc_exit.)
      sleep(curproc, &ptable.lock);  //DOC wait-sleep
-   }
- }
+   }// End outer loop
+ } // End join
