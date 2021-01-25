@@ -397,7 +397,7 @@ mprotect(void *addr, int len){
 
   // Check if addr is not page aligned
   if((int)(((int) addr) % PGSIZE ) != 0){
-    cprintf("Invalid Address. 0x%x\n", addr);
+    cprintf("Invalid Address. 0x%p\n", addr);
     return -1;
   }
 
@@ -419,9 +419,10 @@ mprotect(void *addr, int len){
     */
     if(pte && ((*pte & PTE_U) != 0) && ((*pte & PTE_P) != 0) && (*pte & PTE_W) != 0){
       // Clear the write flag bit
-      cprintf("Changing PTE write flag bit.\nPTE before changing = 0x%x\n", *pte);
+      cprintf("Changing PTE write flag bit.\nPTE before changing = 0x%p\n", *pte);
       *pte = (*pte) & (~PTE_W);
-      cprintf("Changed changing PTE write flag bit\nPTE after changing = 0x%x\n", *pte);
+      cprintf("Changed changing PTE write flag bit\nPTE after changing = 0x%p\n", *pte);
+      cprintf("\n");
     }
     else
       return -1;
@@ -450,7 +451,7 @@ munprotect(void *addr, int len){
 
   //Check if addr is not page aligned
   if((int)(((int) addr) % PGSIZE )  != 0){
-    cprintf("Invalid Address. 0x%x\n", addr);
+    cprintf("Invalid Address. 0x%p\n", addr);
     return -1;
   }
 
@@ -474,9 +475,10 @@ munprotect(void *addr, int len){
       if not set only read instructions fetches are allowed
     */
     if(pte && ((*pte & PTE_U) != 0) && ((*pte & PTE_P) != 0) ){
-      cprintf("Setting PTE write flag bit.\nPTE before  setting = 0x%x\n", *pte);
+      cprintf("Setting PTE write flag bit.\nPTE before  setting = 0x%p\n", *pte);
       *pte = (*pte) | (PTE_W) ; //Setting the write bit 
-      cprintf("Setting changing PTE write flag bit\nPTE after setting = 0x%x\n", *pte);
+      cprintf("Setting changing PTE write flag bit\nPTE after setting = 0x%p\n", *pte);
+      cprintf("\n");
     } else {
       return -1;
     }
