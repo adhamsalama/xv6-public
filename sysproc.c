@@ -121,6 +121,7 @@ sys_getpinfo(void){
 int 
 sys_clone(void){
   void *fcn, *arg1,*arg2, *stack;
+  // load argument 0 into the fcn pointer and return -1 if it is not void*
   if (argptr(0, (void *)&fcn, sizeof(void *)) < 0)
     return -1;
   if (argptr(1, (void *)&arg1, sizeof(void *)) < 0)
