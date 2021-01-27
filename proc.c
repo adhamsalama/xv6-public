@@ -653,7 +653,9 @@ clone(void(*fcn)(void*,void*), void *arg1,void *arg2, void *stack) {
    np->parent = curproc;
    *np->tf = *curproc->tf;
    uint user_stack[3];
+  //  This sets the first value in the stack, which the base pointer will be set to. It's a "fake" value because there is no previous base pointer.
     user_stack[0] = 0xffffffff;
+    // This sets the first value after the base pointer to the function argument. As mentioned earlier, function arguments are placed in order on the stack. So, the cloned function will retrieve arg as its first argument.
     user_stack[1] = (uint) arg1;
     user_stack[2] = (uint) arg2;
     // set top of the stack to the allocated page
@@ -668,11 +670,15 @@ clone(void(*fcn)(void*,void*), void *arg1,void *arg2, void *stack) {
     }
     // set stack base and stack pointers for return-from-trap
     // they will be the same value because we are returning into a function
+
+    // The base pointer is set to the top of the newly-allocated memory.
     np->tf->ebp = (uint) stack_top;
+    // The stack pointer is also set to the of the page because that is where our function will enter. The process will use esp to find the function args passed to it, and start execution from there. Normally, ebp and esp would not be the same, but this is a special case because we are starting a new process!
     np->tf->esp = (uint) stack_top;
-    // set instruction pointer to address of function
+    // This sets the instruction pointer register. This ensures the cloned process will run fcn on start.
     np->tf->eip = (uint) fcn;
    // Clear %eax so that fork returns 0 in the child.
+  //  This is the return register. The child process returning from clone should get 0 as a return value.
    np->tf->eax = 0;
    int i ;
    for (i = 0; i < NOFILE; i++)
