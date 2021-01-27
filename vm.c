@@ -390,7 +390,7 @@ int
 mprotect(void *addr, int len){
   
   // Check if len is invalid, if <= 0 or larger than process size
-  if(len <= 0 || (int)addr+len*PGSIZE>myproc()->sz){
+  if(len <= 0 || (int)addr+len*PGSIZE > myproc()->sz){
     cprintf("Invalid Length.\n");
     return -1;
   }

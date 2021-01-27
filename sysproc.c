@@ -143,15 +143,19 @@ int sys_join(void) {
 
 int
 sys_mprotect(void){
-  int d;
-  int n = 0;
-  if(argint(0, &d)<0 || argint(1, &n)<0)
+  // Passing arguments from user-level functions to kernel-level functions cannot be done in XV6. 
+  // XV6 has its own built-in functions for passing arguments into a kernel function. For instance, to pass in an integer, the argint() function is called
+  int addr;
+  int len = 0;
+  if(argint(0, &addr) < 0 || argint(1, &len) < 0)
     return -1;
-  return mprotect((void *)d,n);
+  return mprotect((void *)addr,len);
 }
 
 int
 sys_munprotect(void){
+  // Passing arguments from user-level functions to kernel-level functions cannot be done in XV6. 
+  // XV6 has its own built-in functions for passing arguments into a kernel function. For instance, to pass in an integer, the argint() function is called
   int addr;
   int  len = 0;
   if(argint(0, &addr) < 0 || argint(1, &len) < 0){
